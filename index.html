@@ -1615,9 +1615,12 @@
         setUnlocked(true);
         closeMobileSidebar();
         if (messages.length) restoreBackendSession();
-      } catch {
+      } catch (error) {
         setUnlocked(false);
-        accessStatus.textContent = "密码不正确";
+        const detail = error?.message || "";
+        accessStatus.textContent = detail.includes("访问密码不正确")
+          ? "密码不正确"
+          : (detail || "验证服务暂时不可用，请稍后重试");
         accessStatus.className = "access-status bad";
         passwordInput.focus();
       } finally {
