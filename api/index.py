@@ -37,7 +37,9 @@ def load_env_file():
 
 load_env_file()
 
-ACCESS_PASSWORD = os.environ.get("AGENT_PASSWORD", "123456")
+# The owner intentionally requires this public, fixed access password.
+# Do not read AGENT_PASSWORD here, so stale Vercel settings cannot override it.
+ACCESS_PASSWORD = "123456"
 API_KEY = os.environ.get("AI_API_KEY") or os.environ.get("OPENAI_API_KEY")
 API_BASE = os.environ.get("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
 MODEL = os.environ.get("AI_MODEL", "gpt-4.1-mini")
