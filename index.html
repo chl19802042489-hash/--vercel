@@ -1167,7 +1167,7 @@
         </div>
         <div class="password-line">
           <div class="password-field">
-            <input id="passwordInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="请输入密码">
+            <input id="passwordInput" type="password" inputmode="numeric" autocomplete="off" maxlength="128" placeholder="请输入密码">
             <button class="password-toggle" id="passwordToggle" type="button" aria-label="显示密码" title="显示密码">
               <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
@@ -1229,7 +1229,7 @@
 
       <div class="composer-wrap">
         <form class="composer" id="chatForm">
-          <textarea id="messageInput" placeholder="发消息..." disabled></textarea>
+          <textarea id="messageInput" maxlength="4000" placeholder="发消息..." disabled></textarea>
           <div class="composer-actions">
             <button class="stop" id="stopBtn" type="button" aria-label="停止生成" title="停止生成">■</button>
             <button class="send" id="sendBtn" type="submit" aria-label="发送">↑</button>
@@ -1611,6 +1611,7 @@
       try {
         await apiWithPassword("/api/status", candidate);
         verifiedAccessPassword = candidate;
+        passwordInput.value = "";
         setUnlocked(true);
         closeMobileSidebar();
         if (messages.length) restoreBackendSession();
@@ -2133,7 +2134,9 @@ ${contextInstruction}
           const response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: requestBody
+            body: requestBody,
+            credentials: "omit",
+            referrerPolicy: "no-referrer"
           });
           const payload = await response.json().catch(() => ({}));
 
@@ -2177,6 +2180,8 @@ ${contextInstruction}
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: requestBody,
+            credentials: "omit",
+            referrerPolicy: "no-referrer",
             signal
           });
 

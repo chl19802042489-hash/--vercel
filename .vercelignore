@@ -5,3 +5,4 @@ __pycache__/
 cloudflared*
 server.*.log
 公网链接.txt
+tests/

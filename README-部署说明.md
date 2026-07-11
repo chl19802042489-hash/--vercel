@@ -2,16 +2,20 @@
 
 这个文件夹就是 Vercel 要关联的项目根目录。
 
-项目目录：
-
-`C:\Users\10147\Documents\游戏生图\image2-vercel`
-
 部署时不要上传本地 `.env`。请在 Vercel 项目后台配置环境变量：
 
 - `AI_API_KEY`：你的 DeepSeek API Key
 - `AI_API_BASE`：`https://api.deepseek.com`
 - `AI_MODEL`：`deepseek-v4-pro`
 - `AGENT_PASSWORD`：访问密码，默认可设为 `123456`
+- `ALLOWED_ORIGINS`：可选。前后端同域部署时留空；分离部署时填写允许的 HTTPS 来源，多个来源用英文逗号分隔
+
+安全说明：
+
+- 真实 API Key 只能放在 Vercel 环境变量中，绝对不要写入 `.env.example`、前端代码或 GitHub
+- 后端已限制请求体大小、消息长度、登录失败次数和每个 IP 的请求频率
+- 限流数据保存在单个 Serverless 实例内；如需面向大量公网用户，应再接入 Vercel Firewall 或持久化限流服务
+- `AGENT_PASSWORD=123456` 是弱密码，虽然保留兼容，但不适合高额度或敏感用途
 
 Vercel 关联项目时：
 

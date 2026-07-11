@@ -1,12 +1,23 @@
 ﻿import json
+import hmac
 import os
+import re
+import threading
+import time
 import urllib.error
 import urllib.request
+from collections import OrderedDict, deque
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
-ACCESS_PASSWORD = os.environ.get("AGENT_PASSWORD", "123456")
+def env_int(name, default, minimum, maximum):
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return max(minimum, min(value, maximum))
 
 
 def load_env_file():
@@ -26,10 +37,85 @@ def load_env_file():
 
 load_env_file()
 
+ACCESS_PASSWORD = os.environ.get("AGENT_PASSWORD", "123456")
 API_KEY = os.environ.get("AI_API_KEY") or os.environ.get("OPENAI_API_KEY")
 API_BASE = os.environ.get("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
 MODEL = os.environ.get("AI_MODEL", "gpt-4.1-mini")
 ROOT = Path(__file__).resolve().parent
+
+MAX_REQUEST_BYTES = env_int("MAX_REQUEST_BYTES", 64 * 1024, 1024, 256 * 1024)
+MAX_MESSAGE_CHARS = env_int("MAX_MESSAGE_CHARS", 4000, 200, 16000)
+MAX_MODEL_MESSAGE_CHARS = env_int("MAX_MODEL_MESSAGE_CHARS", 16000, 1000, 50000)
+MAX_RESTORE_MESSAGES = 20
+MAX_SESSIONS = env_int("MAX_SESSIONS", 500, 10, 5000)
+GENERAL_RATE_LIMIT = env_int("GENERAL_RATE_LIMIT", 60, 10, 1000)
+CHAT_RATE_LIMIT = env_int("CHAT_RATE_LIMIT", 20, 1, 200)
+AUTH_FAILURE_LIMIT = env_int("AUTH_FAILURE_LIMIT", 5, 2, 50)
+MAX_RATE_LIMIT_KEYS = env_int("MAX_RATE_LIMIT_KEYS", 10000, 100, 50000)
+RATE_WINDOW_SECONDS = 60
+AUTH_WINDOW_SECONDS = 10 * 60
+SESSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+ALLOWED_ORIGINS = {
+    origin.strip().rstrip("/")
+    for origin in os.environ.get("ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+}
+
+
+class RequestError(Exception):
+    def __init__(self, message, status=400):
+        super().__init__(message)
+        self.message = message
+        self.status = status
+
+
+class SlidingWindowLimiter:
+    def __init__(self, limit, window_seconds):
+        self.limit = limit
+        self.window_seconds = window_seconds
+        self.events = {}
+        self.lock = threading.Lock()
+
+    def _active_events(self, key, now):
+        if key not in self.events and len(self.events) >= MAX_RATE_LIMIT_KEYS:
+            self.events.pop(next(iter(self.events)))
+        queue = self.events.setdefault(key, deque())
+        cutoff = now - self.window_seconds
+        while queue and queue[0] <= cutoff:
+            queue.popleft()
+        if not queue:
+            self.events.pop(key, None)
+            queue = self.events.setdefault(key, deque())
+        return queue
+
+    def allow(self, key):
+        now = time.monotonic()
+        with self.lock:
+            queue = self._active_events(key, now)
+            if len(queue) >= self.limit:
+                return False
+            queue.append(now)
+            return True
+
+    def blocked(self, key):
+        now = time.monotonic()
+        with self.lock:
+            return len(self._active_events(key, now)) >= self.limit
+
+    def record(self, key):
+        now = time.monotonic()
+        with self.lock:
+            self._active_events(key, now).append(now)
+
+    def clear(self, key):
+        with self.lock:
+            self.events.pop(key, None)
+
+
+general_limiter = SlidingWindowLimiter(GENERAL_RATE_LIMIT, RATE_WINDOW_SECONDS)
+chat_limiter = SlidingWindowLimiter(CHAT_RATE_LIMIT, RATE_WINDOW_SECONDS)
+auth_failure_limiter = SlidingWindowLimiter(AUTH_FAILURE_LIMIT, AUTH_WINDOW_SECONDS)
+sessions_lock = threading.Lock()
 
 SYSTEM_PROMPT = """你是“毛泽东抗日战争思想普及智能体”。
 
@@ -82,7 +168,49 @@ SYSTEM_PROMPT += """
 """
 
 
-sessions = {}
+sessions = OrderedDict()
+
+
+def normalize_session_id(value):
+    session_id = str(value or "default").strip()
+    if not SESSION_ID_PATTERN.fullmatch(session_id):
+        raise RequestError("会话标识格式无效")
+    return session_id
+
+
+def get_session(session_id):
+    with sessions_lock:
+        history = list(sessions.get(session_id, []))
+        if session_id in sessions:
+            sessions.move_to_end(session_id)
+        return history
+
+
+def save_session(session_id, history):
+    with sessions_lock:
+        sessions[session_id] = list(history[-20:])
+        sessions.move_to_end(session_id)
+        while len(sessions) > MAX_SESSIONS:
+            sessions.popitem(last=False)
+
+
+def clear_session(session_id):
+    with sessions_lock:
+        sessions.pop(session_id, None)
+
+
+def validated_messages(payload):
+    message = payload.get("original_message") or payload.get("message") or ""
+    model_message = payload.get("message") or message
+    if not isinstance(message, str) or not isinstance(model_message, str):
+        raise RequestError("消息格式无效")
+    message = message.strip()
+    model_message = model_message.strip()
+    if not message:
+        raise RequestError("消息不能为空")
+    if len(message) > MAX_MESSAGE_CHARS or len(model_message) > MAX_MODEL_MESSAGE_CHARS:
+        raise RequestError("消息过长，请缩短后重试", status=413)
+    return message, model_message
 
 
 def clean_user_content_for_history(content):
@@ -131,55 +259,148 @@ SYSTEM_PROMPT += """
 
 
 class handler(BaseHTTPRequestHandler):
+    server_version = "MaoAgent"
+    sys_version = ""
+
+    def client_key(self):
+        forwarded = self.headers.get("X-Vercel-Forwarded-For") or self.headers.get(
+            "X-Forwarded-For", ""
+        )
+        if forwarded:
+            return forwarded.split(",", 1)[0].strip()[:128]
+        return str(self.client_address[0] if self.client_address else "unknown")[:128]
+
+    def allowed_origin(self):
+        origin = self.headers.get("Origin")
+        if not origin:
+            return None
+        normalized = origin.rstrip("/")
+        if normalized in ALLOWED_ORIGINS:
+            return normalized
+        parsed = urlsplit(normalized)
+        host = self.headers.get("Host", "").lower()
+        if parsed.scheme in ("http", "https") and parsed.netloc.lower() == host:
+            return normalized
+        return None
+
+    def origin_is_allowed(self):
+        return not self.headers.get("Origin") or self.allowed_origin() is not None
+
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        allowed_origin = self.allowed_origin()
+        if allowed_origin:
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        self.send_header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+        self.send_header("Strict-Transport-Security", "max-age=31536000")
         super().end_headers()
 
     def do_OPTIONS(self):
+        if not self.origin_is_allowed():
+            self.write_json({"error": "不允许的请求来源"}, status=403)
+            return
         self.send_response(204)
         self.end_headers()
 
     def do_POST(self):
-        if self.path == "/api/chat_stream":
-            self.handle_chat_stream()
+        if not self.origin_is_allowed():
+            self.write_json({"error": "不允许的请求来源"}, status=403)
             return
-        if self.path == "/api/chat":
-            self.handle_chat()
+
+        client_key = self.client_key()
+        if not general_limiter.allow(client_key):
+            self.write_json(
+                {"error": "请求过于频繁，请稍后重试"},
+                status=429,
+                extra_headers={"Retry-After": str(RATE_WINDOW_SECONDS)},
+            )
             return
-        if self.path == "/api/clear":
-            self.handle_clear()
+
+        path = urlsplit(self.path).path
+        if path in ("/api/chat", "/api/chat_stream") and not chat_limiter.allow(client_key):
+            self.write_json(
+                {"error": "对话请求过于频繁，请稍后重试"},
+                status=429,
+                extra_headers={"Retry-After": str(RATE_WINDOW_SECONDS)},
+            )
             return
-        if self.path == "/api/restore":
-            self.handle_restore()
+
+        routes = {
+            "/api/chat_stream": self.handle_chat_stream,
+            "/api/chat": self.handle_chat,
+            "/api/clear": self.handle_clear,
+            "/api/restore": self.handle_restore,
+            "/api/status": self.handle_status,
+        }
+        route = routes.get(path)
+        if route is None:
+            self.write_json({"error": "Unknown endpoint"}, status=404)
             return
-        if self.path == "/api/status":
-            self.handle_status()
-            return
-        self.write_json({"error": "Unknown endpoint"}, status=404)
+        try:
+            route()
+        except RequestError as exc:
+            self.write_json({"error": exc.message}, status=exc.status)
 
     def read_json(self):
-        length = int(self.headers.get("Content-Length", "0"))
-        raw = self.rfile.read(length).decode("utf-8") if length else "{}"
         try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            return {}
+            length = int(self.headers.get("Content-Length", "0"))
+        except (TypeError, ValueError) as exc:
+            raise RequestError("请求长度无效") from exc
+        if length < 0 or length > MAX_REQUEST_BYTES:
+            raise RequestError("请求内容过大", status=413)
+        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if length and content_type != "application/json":
+            raise RequestError("仅支持 application/json", status=415)
+        try:
+            raw = self.rfile.read(length).decode("utf-8") if length else "{}"
+            payload = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RequestError("JSON 请求格式无效") from exc
+        if not isinstance(payload, dict):
+            raise RequestError("JSON 顶层必须是对象")
+        return payload
 
     def authorize(self, payload):
-        return payload.get("password") == ACCESS_PASSWORD
+        client_key = self.client_key()
+        if auth_failure_limiter.blocked(client_key):
+            return False, 429
+        supplied = payload.get("password")
+        if not isinstance(supplied, str) or len(supplied) > 128:
+            auth_failure_limiter.record(client_key)
+            return False, 403
+        if hmac.compare_digest(supplied.encode("utf-8"), ACCESS_PASSWORD.encode("utf-8")):
+            auth_failure_limiter.clear(client_key)
+            return True, 200
+        auth_failure_limiter.record(client_key)
+        return False, 403
+
+    def require_authorization(self, payload):
+        authorized, status = self.authorize(payload)
+        if authorized:
+            return True
+        if status == 429:
+            self.write_json(
+                {"error": "密码尝试次数过多，请稍后重试"},
+                status=429,
+                extra_headers={"Retry-After": str(AUTH_WINDOW_SECONDS)},
+            )
+        else:
+            self.write_json({"error": "访问密码不正确"}, status=403)
+        return False
 
     def handle_status(self):
         payload = self.read_json()
-        if not self.authorize(payload):
-            self.write_json({"error": "访问密码不正确"}, status=403)
+        if not self.require_authorization(payload):
             return
         if API_KEY:
-            self.write_json({
-                "message": f"模型接口已配置：{MODEL}，API_BASE={API_BASE}"
-            })
+            self.write_json({"message": "模型接口已配置"})
         else:
             self.write_json({
                 "message": "模型接口未配置。请在 Vercel 项目环境变量中设置 AI_API_KEY。"
@@ -187,34 +408,39 @@ class handler(BaseHTTPRequestHandler):
 
     def handle_clear(self):
         payload = self.read_json()
-        if not self.authorize(payload):
-            self.write_json({"error": "访问密码不正确"}, status=403)
+        if not self.require_authorization(payload):
             return
-        session_id = payload.get("session_id") or "default"
-        sessions.pop(session_id, None)
+        session_id = normalize_session_id(payload.get("session_id"))
+        clear_session(session_id)
         self.write_json({"ok": True})
 
     def handle_restore(self):
         payload = self.read_json()
-        if not self.authorize(payload):
-            self.write_json({"error": "访问密码不正确"}, status=403)
+        if not self.require_authorization(payload):
             return
-        session_id = payload.get("session_id") or "default"
+        session_id = normalize_session_id(payload.get("session_id"))
+        incoming_messages = payload.get("messages") or []
+        if not isinstance(incoming_messages, list):
+            raise RequestError("历史消息格式无效")
         restored = []
-        for item in payload.get("messages") or []:
+        for item in incoming_messages[-MAX_RESTORE_MESSAGES:]:
+            if not isinstance(item, dict):
+                continue
             role = item.get("role")
-            content = (item.get("content") or "").strip()
+            content = item.get("content") or ""
+            if not isinstance(content, str):
+                continue
+            content = content.strip()[:MAX_MESSAGE_CHARS]
             if role == "user" and content:
                 restored.append({"role": "user", "content": content})
             elif role in ("agent", "assistant") and content:
                 restored.append({"role": "assistant", "content": content})
-        sessions[session_id] = restored[-20:]
-        self.write_json({"ok": True, "count": len(sessions[session_id])})
+        save_session(session_id, restored)
+        self.write_json({"ok": True, "count": len(restored)})
 
     def handle_chat(self):
         payload = self.read_json()
-        if not self.authorize(payload):
-            self.write_json({"error": "访问密码不正确"}, status=403)
+        if not self.require_authorization(payload):
             return
         if not API_KEY:
             self.write_json({
@@ -222,38 +448,28 @@ class handler(BaseHTTPRequestHandler):
             }, status=500)
             return
 
-        message = (payload.get("original_message") or payload.get("message") or "").strip()
-        model_message = (payload.get("message") or message).strip()
-        if not message:
-            self.write_json({"error": "消息不能为空"}, status=400)
-            return
-
-        session_id = payload.get("session_id") or "default"
-        history = sessions.setdefault(session_id, [])
+        message, model_message = validated_messages(payload)
+        session_id = normalize_session_id(payload.get("session_id"))
+        history = get_session(session_id)
         model_history = clean_history_for_model(history) + [{"role": "user", "content": model_message}]
 
         try:
             reply = call_model(model_history)
-        except Exception as exc:
-            self.write_json({"error": f"模型调用失败：{exc}"}, status=502)
+        except Exception:
+            self.write_json({"error": "模型服务暂时不可用，请稍后重试"}, status=502)
             return
 
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": reply})
-        sessions[session_id] = history[-20:]
+        save_session(session_id, history)
         self.write_json({"reply": reply})
 
     def handle_chat_stream(self):
         payload = self.read_json()
-        if not self.authorize(payload):
-            self.write_json({"error": "访问密码不正确"}, status=403)
+        if not self.require_authorization(payload):
             return
 
-        message = (payload.get("original_message") or payload.get("message") or "").strip()
-        model_message = (payload.get("message") or message).strip()
-        if not message:
-            self.write_json({"error": "消息不能为空"}, status=400)
-            return
+        message, model_message = validated_messages(payload)
 
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
@@ -265,8 +481,8 @@ class handler(BaseHTTPRequestHandler):
             self.write_sse({"done": True})
             return
 
-        session_id = payload.get("session_id") or "default"
-        history = sessions.setdefault(session_id, [])
+        session_id = normalize_session_id(payload.get("session_id"))
+        history = get_session(session_id)
         model_history = clean_history_for_model(history) + [{"role": "user", "content": model_message}]
         reply_parts = []
 
@@ -278,9 +494,9 @@ class handler(BaseHTTPRequestHandler):
                 self.write_sse({"delta": delta})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             return
-        except Exception as exc:
+        except Exception:
             try:
-                self.write_sse({"error": f"模型调用失败：{exc}"})
+                self.write_sse({"error": "模型服务暂时不可用，请稍后重试"})
                 self.write_sse({"done": True})
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 pass
@@ -290,14 +506,16 @@ class handler(BaseHTTPRequestHandler):
         if reply:
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": reply})
-            sessions[session_id] = history[-20:]
+            save_session(session_id, history)
         self.write_sse({"done": True})
 
-    def write_json(self, payload, status=200):
+    def write_json(self, payload, status=200, extra_headers=None):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        for name, value in (extra_headers or {}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 
