@@ -54,7 +54,7 @@ API_KEY, API_KEY_SOURCE = first_env(
 )
 DEFAULT_API_BASE = "https://api.openai.com/v1" if API_KEY_SOURCE == "OPENAI_API_KEY" else "https://api.deepseek.com"
 API_BASE = os.environ.get("AI_API_BASE", DEFAULT_API_BASE).rstrip("/")
-DEFAULT_MODEL = "gpt-4.1-mini" if API_KEY_SOURCE == "OPENAI_API_KEY" else "deepseek-chat"
+DEFAULT_MODEL = "gpt-4.1-mini" if API_KEY_SOURCE == "OPENAI_API_KEY" else "deepseek-v4-pro"
 MODEL = os.environ.get("AI_MODEL", DEFAULT_MODEL)
 ROOT = Path(__file__).resolve().parent
 

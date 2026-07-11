@@ -32,7 +32,7 @@ class SecurityHelpersTest(unittest.TestCase):
         self.assertEqual(agent_api.API_KEY, "")
         self.assertEqual(agent_api.API_KEY_SOURCE, "")
         self.assertEqual(agent_api.API_BASE, "https://api.deepseek.com")
-        self.assertEqual(agent_api.MODEL, "deepseek-chat")
+        self.assertEqual(agent_api.MODEL, "deepseek-v4-pro")
 
     def test_constant_time_authorization_and_failure_tracking(self):
         instance = self.make_handler({"X-Forwarded-For": "203.0.113.99"})
