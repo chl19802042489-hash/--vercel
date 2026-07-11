@@ -9,7 +9,8 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 
-os.environ.pop("AGENT_PASSWORD", None)
+for key in ("AGENT_PASSWORD", "AI_API_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "API_KEY"):
+    os.environ.pop(key, None)
 MODULE_PATH = Path(__file__).resolve().parents[1] / "api" / "index.py"
 SPEC = importlib.util.spec_from_file_location("agent_api", MODULE_PATH)
 agent_api = importlib.util.module_from_spec(SPEC)
@@ -26,6 +27,12 @@ class SecurityHelpersTest(unittest.TestCase):
 
     def test_requested_default_password_is_preserved(self):
         self.assertEqual(agent_api.ACCESS_PASSWORD, "123456")
+
+    def test_missing_model_key_is_explicit(self):
+        self.assertEqual(agent_api.API_KEY, "")
+        self.assertEqual(agent_api.API_KEY_SOURCE, "")
+        self.assertEqual(agent_api.API_BASE, "https://api.deepseek.com")
+        self.assertEqual(agent_api.MODEL, "deepseek-chat")
 
     def test_constant_time_authorization_and_failure_tracking(self):
         instance = self.make_handler({"X-Forwarded-For": "203.0.113.99"})
@@ -117,11 +124,12 @@ class SecurityHttpTest(unittest.TestCase):
         return result
 
     def test_status_endpoint_and_security_headers(self):
-        status, headers, _ = self.request("/api/status", {"password": "123456"})
-        self.assertEqual(status, 200)
+        status, headers, body = self.request("/api/status", {"password": "123456"})
+        self.assertEqual(status, 500)
         self.assertEqual(headers.get("X-Content-Type-Options"), "nosniff")
         self.assertEqual(headers.get("X-Frame-Options"), "DENY")
         self.assertEqual(headers.get("Cache-Control"), "no-store")
+        self.assertIn("AI_API_KEY", body.decode("utf-8"))
 
     def test_cross_origin_request_is_rejected(self):
         status, _, _ = self.request(

@@ -37,12 +37,25 @@ def load_env_file():
 
 load_env_file()
 
+
+def first_env(names):
+    for name in names:
+        value = os.environ.get(name)
+        if value:
+            return value.strip(), name
+    return "", ""
+
+
 # The owner intentionally requires this public, fixed access password.
 # Do not read AGENT_PASSWORD here, so stale Vercel settings cannot override it.
 ACCESS_PASSWORD = "123456"
-API_KEY = os.environ.get("AI_API_KEY") or os.environ.get("OPENAI_API_KEY")
-API_BASE = os.environ.get("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
-MODEL = os.environ.get("AI_MODEL", "gpt-4.1-mini")
+API_KEY, API_KEY_SOURCE = first_env(
+    ("AI_API_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "API_KEY")
+)
+DEFAULT_API_BASE = "https://api.openai.com/v1" if API_KEY_SOURCE == "OPENAI_API_KEY" else "https://api.deepseek.com"
+API_BASE = os.environ.get("AI_API_BASE", DEFAULT_API_BASE).rstrip("/")
+DEFAULT_MODEL = "gpt-4.1-mini" if API_KEY_SOURCE == "OPENAI_API_KEY" else "deepseek-chat"
+MODEL = os.environ.get("AI_MODEL", DEFAULT_MODEL)
 ROOT = Path(__file__).resolve().parent
 
 MAX_REQUEST_BYTES = env_int("MAX_REQUEST_BYTES", 64 * 1024, 1024, 256 * 1024)
@@ -402,11 +415,16 @@ class handler(BaseHTTPRequestHandler):
         if not self.require_authorization(payload):
             return
         if API_KEY:
-            self.write_json({"message": "模型接口已配置"})
+            self.write_json({
+                "message": f"模型接口已配置（{API_KEY_SOURCE}，{MODEL}）"
+            })
         else:
             self.write_json({
-                "message": "模型接口未配置。请在 Vercel 项目环境变量中设置 AI_API_KEY。"
-            })
+                "error": (
+                    "后端还没有配置模型 API Key。请在 Vercel 项目环境变量中设置 "
+                    "AI_API_KEY 或 DEEPSEEK_API_KEY，然后重新部署。"
+                )
+            }, status=500)
 
     def handle_clear(self):
         payload = self.read_json()
