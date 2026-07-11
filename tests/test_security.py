@@ -125,7 +125,7 @@ class SecurityHttpTest(unittest.TestCase):
 
     def test_status_endpoint_and_security_headers(self):
         status, headers, body = self.request("/api/status", {"password": "123456"})
-        self.assertEqual(status, 500)
+        self.assertEqual(status, 200)
         self.assertEqual(headers.get("X-Content-Type-Options"), "nosniff")
         self.assertEqual(headers.get("X-Frame-Options"), "DENY")
         self.assertEqual(headers.get("Cache-Control"), "no-store")

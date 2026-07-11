@@ -424,7 +424,7 @@ class handler(BaseHTTPRequestHandler):
                     "后端还没有配置模型 API Key。请在 Vercel 项目环境变量中设置 "
                     "AI_API_KEY 或 DEEPSEEK_API_KEY，然后重新部署。"
                 )
-            }, status=500)
+            })
 
     def handle_clear(self):
         payload = self.read_json()
