@@ -1,0 +1,8 @@
+.env
+.vercel/
+__pycache__/
+*.pyc
+*.log
+cloudflared*
+server.*.log
+公网链接.txt

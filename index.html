@@ -1,0 +1,2502 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>毛泽东抗日战争思想普及智能体</title>
+  <style>
+    :root {
+      --sidebar: #f7ead8;
+      --paper: #fff2dc;
+      --paper-deep: #f2dfc3;
+      --border: #dec49d;
+      --text: #2a1711;
+      --muted: #8b6f5e;
+      --soft: #f4e4cb;
+      --soft-hover: #ead4b0;
+      --brand: #7d0000;
+      --brand-deep: #5f0000;
+      --danger: #9b1c1c;
+      --danger-soft: #f6dfd7;
+      --shadow: 0 18px 36px rgba(92, 43, 16, 0.12);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Serif SC", SimSun, serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 92% 8%, rgba(125, 0, 0, 0.05) 0 140px, transparent 142px),
+        linear-gradient(90deg, rgba(125, 0, 0, 0.05) 0 1px, transparent 1px),
+        #fffaf3;
+      background-size: auto, 28px 28px, auto;
+    }
+
+    button, textarea, input {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      padding: 24px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: 300px;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .agent-head {
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 2px 8px 28px;
+    }
+
+    .avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      object-fit: contain;
+      object-position: center;
+      background: #fff8ea;
+      border: 1px solid #d7bd96;
+      padding: 3px;
+      box-shadow: 0 6px 14px rgba(92, 43, 16, 0.12), inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+      user-select: none;
+      -webkit-user-drag: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+    }
+
+    .agent-title {
+      font-weight: 700;
+      line-height: 1.22;
+      font-size: 17px;
+      color: var(--brand);
+    }
+
+    .agent-subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .nav-btn,
+    .utility-btn {
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #5a3028;
+      min-height: 44px;
+      border-radius: 8px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .nav-btn.active,
+    .nav-btn:hover,
+    .utility-btn:hover {
+      background: var(--brand);
+      color: #fffaf3;
+      box-shadow: 0 8px 18px rgba(125, 0, 0, 0.18);
+    }
+
+    .kbd {
+      margin-left: auto;
+      color: rgba(255, 250, 243, 0.78);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      color: currentColor;
+      font-size: 18px;
+      flex: 0 0 auto;
+    }
+
+    .access-panel {
+      margin: 18px 4px 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 247, 235, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .access-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #6e4b3d;
+      font-size: 13px;
+      margin-bottom: 9px;
+    }
+
+    .password-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 68px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .password-field {
+      position: relative;
+      min-width: 0;
+    }
+
+    .password-line input {
+      width: 100%;
+      min-width: 0;
+      height: 36px;
+      border: 1px solid #d9bc90;
+      border-radius: 8px;
+      padding: 0 44px 0 10px;
+      outline: none;
+      font-size: 14px;
+      background: #fffaf3;
+    }
+
+    .password-line input:focus {
+      border-color: #a05748;
+      box-shadow: 0 0 0 3px rgba(125, 0, 0, 0.08);
+      background: #fffdf8;
+    }
+
+    .password-line button {
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--brand);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .password-line > button {
+      min-width: 68px;
+      height: 36px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      white-space: nowrap;
+      word-break: keep-all;
+      writing-mode: horizontal-tb;
+      flex-shrink: 0;
+    }
+
+    .password-line .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+      transform: translateY(-50%);
+      border-radius: 50%;
+      border: 0;
+      color: #6f0000;
+      background: transparent;
+      box-shadow: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .password-line .password-toggle:hover {
+      color: #6f0000;
+      background: transparent;
+    }
+
+    .password-line .password-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .password-toggle .eye-closed {
+      display: none;
+    }
+
+    .password-toggle.is-visible .eye-open {
+      display: none;
+    }
+
+    .password-toggle.is-visible .eye-closed {
+      display: block;
+    }
+
+    .access-status {
+      margin-top: 9px;
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .access-status.ok { color: #2f7d32; }
+    .access-status.bad { color: var(--danger); }
+
+    .history-panel {
+      margin: 22px 4px 0;
+      min-height: 0;
+    }
+
+    .history-title {
+      color: #947a67;
+      font-size: 13px;
+      padding: 0 8px 10px;
+      font-weight: 700;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 6px;
+      max-height: 330px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .history-entry {
+      width: 100%;
+      min-height: 38px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      padding: 0 10px;
+      display: grid;
+      grid-template-columns: 18px 1fr 28px;
+      align-items: center;
+      gap: 8px;
+      color: #5b3a31;
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .history-entry:hover,
+    .history-entry.active {
+      background: rgba(255, 250, 243, 0.85);
+    }
+
+    .history-entry:focus-visible {
+      outline: 2px solid rgba(159, 44, 44, 0.22);
+      outline-offset: 1px;
+    }
+
+    .history-entry-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-more {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #6f4b3f;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .history-more:hover,
+    .history-more.active {
+      background: rgba(159, 44, 44, 0.1);
+      color: #7d0000;
+    }
+
+    .history-menu {
+      position: fixed;
+      z-index: 30;
+      min-width: 132px;
+      padding: 8px;
+      border: 1px solid rgba(128, 84, 56, 0.18);
+      border-radius: 14px;
+      background: #fffaf3;
+      box-shadow: 0 16px 36px rgba(76, 37, 16, 0.18);
+      display: none;
+    }
+
+    .history-menu.visible {
+      display: grid;
+      gap: 4px;
+    }
+
+    .history-menu button {
+      width: 100%;
+      min-height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #3f2b24;
+      cursor: pointer;
+      text-align: left;
+      padding: 0 10px;
+      font-size: 14px;
+    }
+
+    .history-menu button:hover {
+      background: #f1e2cc;
+    }
+
+    .history-menu .danger {
+      color: #c62828;
+    }
+
+    .history-empty {
+      color: #a78a76;
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+
+    .spacer { flex: 1; }
+
+    .sidebar-bottom {
+      border-top: 1px solid rgba(125, 0, 0, 0.12);
+      padding-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .utility-btn.danger { color: var(--danger); }
+
+    .utility-btn.danger:hover {
+      background: var(--danger-soft);
+      box-shadow: none;
+    }
+
+    .main {
+      min-width: 0;
+      min-height: 100vh;
+      margin-left: 300px;
+      padding-top: 66px;
+      padding-bottom: 132px;
+    }
+
+    .topbar {
+      border-bottom: 1px solid rgba(125, 0, 0, 0.13);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 24px;
+      background: rgba(255, 250, 243, 0.94);
+      position: fixed;
+      top: 0;
+      left: 300px;
+      right: 0;
+      height: 66px;
+      z-index: 8;
+    }
+
+    .chat-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .chat-title strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--brand);
+      max-width: min(520px, 54vw);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chat-title span {
+      display: block;
+      margin-top: 4px;
+      color: #a98b72;
+      font-size: 12px;
+    }
+
+    .download {
+      height: 36px;
+      border: 1px solid #b88276;
+      color: var(--brand);
+      background: #fffaf3;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .mobile-menu-btn,
+    .mobile-new-chat-btn,
+    .mobile-scrim,
+    .mobile-welcome-title {
+      display: none;
+    }
+
+    .workspace {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 32px 28px 22px;
+      min-height: calc(100vh - 190px);
+    }
+
+    .conversation {
+      width: min(900px, 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 16px;
+    }
+
+    .welcome {
+      margin: auto 0;
+      text-align: center;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 100% 0, rgba(125, 0, 0, 0.06) 0 110px, transparent 112px),
+        var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .welcome h1 {
+      margin: 0 0 12px;
+      font-size: 26px;
+      line-height: 1.25;
+      letter-spacing: 0;
+      color: var(--brand);
+    }
+
+    .desktop-welcome-title {
+      display: inline;
+    }
+
+    .welcome-note {
+      margin: 0 auto 28px;
+      max-width: 620px;
+      color: #6f4c3d;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .prompts {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .prompt-chip {
+      border: 1px solid #d8bc90;
+      min-height: 42px;
+      border-radius: 6px;
+      background: #fff8ea;
+      padding: 0 18px;
+      color: #5a3028;
+      font-size: 15px;
+      cursor: pointer;
+      white-space: normal;
+      max-width: 420px;
+    }
+
+    .prompt-chip:hover { background: var(--soft-hover); }
+
+    .message {
+      max-width: 82%;
+      padding: 18px 22px;
+      border-radius: 8px;
+      line-height: 1.75;
+      font-size: 16px;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: #ead8bd;
+      color: #4a241c;
+      border: 1px solid #d4b98e;
+      border-bottom-right-radius: 0;
+      box-shadow: 0 8px 18px rgba(92, 43, 16, 0.09);
+      position: relative;
+    }
+
+    .message.user::after {
+      content: "";
+      position: absolute;
+      right: -11px;
+      top: 16px;
+      border-width: 10px 0 10px 12px;
+      border-style: solid;
+      border-color: transparent transparent transparent #ead8bd;
+    }
+
+    .message-actions {
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin: -8px 10px 2px 0;
+      color: #9b9188;
+    }
+
+    .message-action {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .message-action:hover {
+      color: #7d0000;
+      background: rgba(125, 0, 0, 0.06);
+    }
+
+    .message-action svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .message-editor {
+      align-self: flex-end;
+      width: min(680px, 82%);
+      border: 1px solid #d4b98e;
+      border-radius: 18px;
+      background: #ead8bd;
+      box-shadow: 0 8px 18px rgba(92, 43, 16, 0.09);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .message-editor textarea {
+      width: 100%;
+      min-height: 76px;
+      max-height: 180px;
+      border: 0;
+      outline: 0;
+      resize: vertical;
+      border-radius: 12px;
+      background: rgba(255, 250, 243, 0.56);
+      color: #2d1b15;
+      padding: 10px 12px;
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    .message-editor-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .message-editor-actions button {
+      min-width: 56px;
+      height: 34px;
+      border: 0;
+      border-radius: 17px;
+      cursor: pointer;
+      padding: 0 14px;
+      font-size: 14px;
+    }
+
+    .message-edit-cancel {
+      background: #fffaf3;
+      color: #5a3028;
+    }
+
+    .message-edit-send {
+      background: var(--brand);
+      color: #fffaf3;
+    }
+
+    .message.agent {
+      align-self: flex-start;
+      background: var(--paper);
+      color: #2d1b15;
+      border: 1px solid #d4b98e;
+      border-bottom-left-radius: 0;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .message.agent::before {
+      content: "";
+      position: absolute;
+      left: -72px;
+      top: 0;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: url("assets/message-avatar-card.png") center / cover no-repeat;
+      box-shadow: 0 7px 16px rgba(92, 43, 16, 0.14);
+    }
+
+    .message.agent strong {
+      color: #05070a;
+      font-weight: 800;
+    }
+
+    .agent-major {
+      margin: 6px 0 10px;
+      color: #05070a;
+      font-size: 20px;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    .agent-minor {
+      margin: 16px 0 8px;
+      color: #05070a;
+      font-size: 17px;
+      line-height: 1.55;
+      font-weight: 800;
+    }
+
+    .agent-paragraph {
+      margin: 0 0 14px;
+    }
+
+    .agent-paragraph:last-child {
+      margin-bottom: 0;
+    }
+
+    .message.system {
+      max-width: 100%;
+      align-self: center;
+      background: #fff7ed;
+      color: #8a4b12;
+      border: 1px solid #d8bc90;
+      font-size: 14px;
+    }
+
+    .typing {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #9d7b63;
+      animation: pulse 1s infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: .3; transform: translateY(0); }
+      40% { opacity: 1; transform: translateY(-3px); }
+    }
+
+    .composer-wrap {
+      padding: 12px 28px 20px;
+      display: flex;
+      justify-content: center;
+      background: linear-gradient(180deg, rgba(255, 250, 243, 0.1), #fffaf3 28%);
+      position: fixed;
+      left: 300px;
+      right: 0;
+      bottom: 0;
+      z-index: 8;
+    }
+
+    .composer {
+      width: min(1120px, 100%);
+      min-height: 96px;
+      border: 1px solid #b89465;
+      border-radius: 18px;
+      background: #efe0ca;
+      box-shadow: var(--shadow);
+      padding: 14px 16px 12px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 32px;
+      max-height: 120px;
+      resize: none;
+      border: 0;
+      outline: 0;
+      border-radius: 14px;
+      background: #efe0ca;
+      color: var(--text);
+      padding: 4px 2px;
+      line-height: 1.5;
+    }
+
+    textarea::placeholder { color: #b69b84; }
+
+    .composer-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tool-btn {
+      border: 0;
+      background: transparent;
+      color: #5a3028;
+      min-height: 30px;
+      padding: 0 6px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .tool-btn:hover { background: var(--soft); }
+
+    .send {
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--brand);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .send.enabled {
+      background: var(--brand);
+      color: #fffaf3;
+    }
+
+    .stop {
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: #f6dfd7;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 15px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stop.visible {
+      display: inline-flex;
+    }
+
+    .stop:disabled {
+      cursor: default;
+      opacity: 0.65;
+    }
+
+    .stop:hover {
+      background: #ead0c6;
+    }
+
+    .locked .composer {
+      border-color: #e6e8ee;
+      box-shadow: none;
+      background: #f4e8d7;
+    }
+
+    .locked textarea { color: #a2a5ab; }
+
+    @media (max-width: 860px) {
+      body {
+        min-height: 100svh;
+        background:
+          linear-gradient(90deg, rgba(125, 0, 0, 0.045) 0 1px, transparent 1px),
+          #fffaf3;
+        background-size: 28px 28px, auto;
+      }
+
+      .app {
+        min-height: 100svh;
+      }
+
+      .mobile-menu-btn {
+        display: grid;
+        place-items: center;
+        position: fixed;
+        top: 10px;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 12px;
+        background: rgba(255, 250, 243, 0.82);
+        color: var(--brand);
+        z-index: 45;
+        box-shadow: 0 8px 18px rgba(92, 43, 16, 0.08);
+        padding: 0;
+        line-height: 1;
+      }
+
+      .mobile-menu-btn {
+        left: 10px;
+      }
+
+      .mobile-menu-btn svg {
+        width: 26px;
+        height: 26px;
+        display: block;
+        stroke: currentColor;
+        stroke-width: 2.4;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .mobile-new-chat-btn {
+        display: none;
+      }
+
+      .nav-btn .kbd {
+        display: none;
+      }
+
+      .mobile-scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(42, 23, 17, 0.32);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 35;
+      }
+
+      .app.sidebar-open .mobile-scrim {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(84vw, 340px);
+        height: 100svh;
+        min-height: 0;
+        border-right: 1px solid var(--border);
+        border-bottom: 0;
+        transform: translateX(-104%);
+        transition: transform 0.22s ease;
+        z-index: 40;
+        overflow-y: auto;
+        padding: 22px 16px 18px;
+        box-shadow: 18px 0 42px rgba(92, 43, 16, 0.18);
+      }
+
+      .app.sidebar-open .sidebar {
+        transform: translateX(0);
+      }
+
+      .agent-head {
+        grid-template-columns: 54px 1fr;
+        gap: 12px;
+        padding: 0 6px 20px;
+      }
+
+      .avatar {
+        width: 52px;
+        height: 52px;
+      }
+
+      .agent-title {
+        font-size: 16px;
+      }
+
+      .nav-btn {
+        min-height: 48px;
+        border-radius: 12px;
+      }
+
+      .access-panel {
+        margin-top: 16px;
+        border-radius: 14px;
+      }
+
+      .history-list {
+        max-height: none;
+        overflow: visible;
+      }
+
+      .main {
+        margin-left: 0;
+        padding-top: 58px;
+        padding-bottom: 154px;
+        min-height: 100svh;
+      }
+
+      .topbar {
+        left: 0;
+        right: 0;
+        height: 58px;
+        padding: 0 64px;
+        justify-content: center;
+        background: rgba(255, 250, 243, 0.94);
+        backdrop-filter: blur(8px);
+      }
+
+      .chat-title {
+        position: static;
+        transform: none;
+        min-width: 0;
+      }
+
+      .chat-title strong {
+        max-width: calc(100vw - 150px);
+        font-size: 16px;
+      }
+
+      .chat-title span {
+        font-size: 11px;
+      }
+
+      .download {
+        display: none;
+      }
+
+      .workspace {
+        padding: 10px 14px 14px;
+        min-height: calc(100svh - 212px);
+        align-items: flex-start;
+      }
+
+      .conversation {
+        width: 100%;
+        min-height: calc(100svh - 226px);
+        justify-content: flex-start;
+        gap: 13px;
+      }
+
+      .welcome {
+        margin: auto 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .welcome h1 {
+        margin: 0;
+        color: var(--brand);
+        font-size: 24px;
+        line-height: 1.25;
+      }
+
+      .desktop-welcome-title {
+        display: none;
+      }
+
+      .mobile-welcome-title {
+        display: inline;
+      }
+
+      .welcome-note,
+      .prompts {
+        display: none;
+      }
+
+      .message {
+        max-width: 92%;
+        padding: 14px 16px;
+        border-radius: 14px;
+        font-size: 15px;
+        line-height: 1.72;
+      }
+
+      .message.user {
+        border-bottom-right-radius: 4px;
+      }
+
+      .message.user::after {
+        display: none;
+      }
+
+      .message.agent {
+        border-bottom-left-radius: 4px;
+      }
+
+      .message.agent::before {
+        display: none;
+      }
+
+      .message-actions {
+        margin: -5px 8px 0 0;
+      }
+
+      .message-editor {
+        width: 92%;
+      }
+
+      .composer-wrap {
+        left: 0;
+        right: 0;
+        padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(255, 250, 243, 0), #fffaf3 30%);
+      }
+
+      .composer {
+        width: 100%;
+        min-height: 112px;
+        border-radius: 22px;
+        border-color: #c6a06d;
+        background: #eadbc5;
+        padding: 16px 18px 12px;
+        gap: 10px;
+        box-shadow: 0 12px 30px rgba(92, 43, 16, 0.16);
+      }
+
+      textarea {
+        min-height: 54px;
+        max-height: 132px;
+        background: #eadbc5;
+        font-size: 17px;
+        color: #3b241c;
+      }
+
+      textarea::placeholder {
+        color: #a8927d;
+      }
+
+      .composer-actions {
+        min-height: 34px;
+      }
+
+      .send,
+      .stop {
+        width: 34px;
+        height: 34px;
+      }
+
+      .send {
+        color: var(--brand);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app locked" id="app">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="打开侧边栏">≡</button>
+    <button class="mobile-new-chat-btn" id="mobileNewChatBtn" type="button" aria-label="新对话">＋</button>
+    <div class="mobile-scrim" id="mobileScrim"></div>
+
+    <aside class="sidebar">
+      <div class="agent-head">
+        <img class="avatar" src="assets/mao-avatar.png" alt="毛泽东头像" draggable="false">
+        <div>
+          <div class="agent-title">毛泽东抗日战争思想普及智能体</div>
+          <div class="agent-subtitle">《论持久战》讲解</div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="主导航">
+        <button class="nav-btn active" id="newChatBtn" type="button">
+          <span>新对话</span>
+          <span class="kbd">Alt E</span>
+        </button>
+      </nav>
+
+      <div class="access-panel">
+        <div class="access-row">
+          <span class="icon">⌕</span>
+          <span>访问密码</span>
+        </div>
+        <div class="password-line">
+          <div class="password-field">
+            <input id="passwordInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="请输入密码">
+            <button class="password-toggle" id="passwordToggle" type="button" aria-label="显示密码" title="显示密码">
+              <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 3l18 18"></path>
+                <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"></path>
+                <path d="M9.5 5.6A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.2 4.1"></path>
+                <path d="M6.4 6.8C3.6 8.7 2 12 2 12s3.5 7 10 7a10.6 10.6 0 0 0 4.1-.8"></path>
+              </svg>
+            </button>
+          </div>
+          <button id="unlockBtn" type="button">进入</button>
+        </div>
+        <div class="access-status" id="accessStatus">输入密码后开始对话</div>
+      </div>
+
+      <div class="history-panel">
+        <div class="history-title">历史记录</div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="sidebar-bottom">
+        <button class="utility-btn danger" id="clearMemoryBtn" type="button">
+          <span class="icon">×</span>
+          <span>清空会话记忆</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="chat-title">
+          <strong id="currentChatTitle">新对话</strong>
+          <span>内容由智能体生成，请注意核实</span>
+        </div>
+        <button class="download" id="exportBtn" type="button">导出对话</button>
+      </header>
+
+      <section class="workspace" id="workspace">
+        <div class="conversation" id="conversation">
+          <div class="welcome" id="welcome">
+            <h1><span class="desktop-welcome-title">《论持久战》研读室</span><span class="mobile-welcome-title">开始对话</span></h1>
+            <p class="welcome-note">围绕抗日战争的战略判断、历史背景与思想方法进行对话。</p>
+            <div class="prompts">
+              <button class="prompt-chip" type="button">为什么《论持久战》反对亡国论？</button>
+              <button class="prompt-chip" type="button">抗日战争为什么不会速胜？</button>
+              <button class="prompt-chip" type="button">持久战的三个阶段是什么？</button>
+              <button class="prompt-chip" type="button">怎样理解兵民是胜利之本？</button>
+              <button class="prompt-chip" type="button">运动战、游击战、阵地战有什么区别？</button>
+              <button class="prompt-chip" type="button">这本书的方法论对普通人有什么启发？</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="composer-wrap">
+        <form class="composer" id="chatForm">
+          <textarea id="messageInput" placeholder="发消息..." disabled></textarea>
+          <div class="composer-actions">
+            <button class="stop" id="stopBtn" type="button" aria-label="停止生成" title="停止生成">■</button>
+            <button class="send" id="sendBtn" type="submit" aria-label="发送">↑</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_FALLBACK_ORIGIN = "";
+    const accessKey = "protracted-war-agent-access";
+    const sessionKey = "protracted-war-agent-session-id";
+    const localMessagesKey = "protracted-war-agent-local-messages";
+    const historyKey = "protracted-war-agent-history";
+    const uiVersionKey = "protracted-war-agent-ui-version";
+    const uiVersion = "2026-07-09-structured-bold-v2";
+
+    const app = document.getElementById("app");
+    const passwordInput = document.getElementById("passwordInput");
+    const passwordToggle = document.getElementById("passwordToggle");
+    const unlockBtn = document.getElementById("unlockBtn");
+    const accessStatus = document.getElementById("accessStatus");
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const chatForm = document.getElementById("chatForm");
+    const workspace = document.getElementById("workspace");
+    const conversation = document.getElementById("conversation");
+    const welcome = document.getElementById("welcome");
+    const clearMemoryBtn = document.getElementById("clearMemoryBtn");
+    const newChatBtn = document.getElementById("newChatBtn");
+    const mobileNewChatBtn = document.getElementById("mobileNewChatBtn");
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const mobileScrim = document.getElementById("mobileScrim");
+    const exportBtn = document.getElementById("exportBtn");
+    const historyList = document.getElementById("historyList");
+    const currentChatTitle = document.getElementById("currentChatTitle");
+
+    if (localStorage.getItem(uiVersionKey) !== uiVersion) {
+      localStorage.setItem(uiVersionKey, uiVersion);
+    }
+
+    let historyRecords = loadHistory();
+    let messages = loadLocalMessages();
+    let sessionId = localStorage.getItem(sessionKey) || crypto.randomUUID();
+    let currentStreamController = null;
+    let stopRequested = false;
+    let isStreamingResponse = false;
+    let autoScrollEnabled = true;
+    let lastScrollY = window.scrollY;
+    let activeHistoryMenuId = null;
+    let historyMenu = null;
+    let editingMessageIndex = null;
+    let verifiedAccessPassword = "";
+    localStorage.setItem(sessionKey, sessionId);
+
+    function loadLocalMessages() {
+      try {
+        return (JSON.parse(localStorage.getItem(localMessagesKey)) || [])
+          .filter((item) => item.content !== "Failed to fetch");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLocalMessages() {
+      localStorage.setItem(localMessagesKey, JSON.stringify(messages));
+      saveCurrentToHistory();
+    }
+
+    function loadHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(historyKey)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveHistory() {
+      localStorage.setItem(historyKey, JSON.stringify(historyRecords));
+    }
+
+    function sortHistoryRecords(records) {
+      return [...records].sort((a, b) => {
+        if (Boolean(a.pinned) !== Boolean(b.pinned)) return a.pinned ? -1 : 1;
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
+    }
+
+    function getHistoryTitle(items) {
+      const firstUser = items.find((item) => item.role === "user" && item.content.trim());
+      if (!firstUser) return "新对话";
+      return firstUser.content.trim().replace(/\s+/g, " ").slice(0, 24);
+    }
+
+    function getCurrentChatTitle() {
+      const currentRecord = historyRecords.find((item) => item.id === sessionId);
+      if (currentRecord?.title) return currentRecord.title;
+      if (messages.length) return getHistoryTitle(messages);
+      return "新对话";
+    }
+
+    function updateCurrentChatTitle() {
+      const title = getCurrentChatTitle();
+      currentChatTitle.textContent = title;
+      currentChatTitle.setAttribute("title", title);
+    }
+
+    function isMobileViewport() {
+      return window.matchMedia("(max-width: 860px)").matches;
+    }
+
+    function getMobileMenuIcon(open) {
+      if (open) {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg>';
+      }
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>';
+    }
+
+    function setMobileSidebar(open) {
+      app.classList.toggle("sidebar-open", Boolean(open));
+      mobileMenuBtn.setAttribute("aria-label", open ? "关闭侧边栏" : "打开侧边栏");
+      mobileMenuBtn.innerHTML = getMobileMenuIcon(open);
+    }
+
+    function closeMobileSidebar() {
+      setMobileSidebar(false);
+    }
+
+    function openInitialMobileSidebar() {
+      if (!isMobileViewport()) return;
+      setMobileSidebar(true);
+    }
+
+    function saveCurrentToHistory() {
+      if (!messages.length) return;
+      const previous = historyRecords.find((item) => item.id === sessionId);
+      const record = {
+        id: sessionId,
+        title: previous?.customTitle ? previous.title : getHistoryTitle(messages),
+        updatedAt: Date.now(),
+        messages: messages,
+        pinned: Boolean(previous?.pinned),
+        customTitle: Boolean(previous?.customTitle)
+      };
+      historyRecords = sortHistoryRecords([record, ...historyRecords.filter((item) => item.id !== sessionId)]).slice(0, 30);
+      saveHistory();
+      renderHistory();
+    }
+
+    function closeHistoryMenu() {
+      activeHistoryMenuId = null;
+      document.querySelectorAll(".history-more.active").forEach((button) => button.classList.remove("active"));
+      if (historyMenu) {
+        historyMenu.classList.remove("visible");
+        historyMenu.innerHTML = "";
+      }
+    }
+
+    function positionHistoryMenu(anchor) {
+      if (!historyMenu) return;
+      const rect = anchor.getBoundingClientRect();
+      const width = 132;
+      const menuHeight = historyMenu.offsetHeight || 124;
+      const left = Math.min(window.innerWidth - width - 10, Math.max(10, rect.right - width));
+      let top = rect.bottom + 6;
+      if (top + menuHeight > window.innerHeight - 10) {
+        top = Math.max(10, rect.top - menuHeight - 6);
+      }
+      historyMenu.style.left = `${left}px`;
+      historyMenu.style.top = `${top}px`;
+    }
+
+    function openHistoryMenu(record, anchor) {
+      if (activeHistoryMenuId === record.id) {
+        closeHistoryMenu();
+        return;
+      }
+      closeHistoryMenu();
+      activeHistoryMenuId = record.id;
+      anchor.classList.add("active");
+
+      if (!historyMenu) {
+        historyMenu = document.createElement("div");
+        historyMenu.className = "history-menu";
+        document.body.appendChild(historyMenu);
+      }
+
+      const pinButton = document.createElement("button");
+      pinButton.type = "button";
+      pinButton.textContent = record.pinned ? "取消置顶" : "置顶";
+      pinButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        togglePinHistoryRecord(record.id);
+      });
+
+      const renameButton = document.createElement("button");
+      renameButton.type = "button";
+      renameButton.textContent = "重命名";
+      renameButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        renameHistoryRecord(record.id);
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger";
+      deleteButton.textContent = "删除";
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        closeHistoryMenu();
+        deleteHistoryRecord(record.id);
+      });
+
+      historyMenu.replaceChildren(pinButton, renameButton, deleteButton);
+      historyMenu.classList.add("visible");
+      positionHistoryMenu(anchor);
+    }
+
+    function renderHistory() {
+      closeHistoryMenu();
+      historyList.innerHTML = "";
+      if (!historyRecords.length) {
+        const empty = document.createElement("div");
+        empty.className = "history-empty";
+        empty.textContent = "暂无历史记录";
+        historyList.appendChild(empty);
+        updateCurrentChatTitle();
+        return;
+      }
+      historyRecords = sortHistoryRecords(historyRecords);
+      historyRecords.forEach((record) => {
+        const entry = document.createElement("div");
+        entry.className = `history-entry${record.id === sessionId ? " active" : ""}`;
+        entry.role = "button";
+        entry.tabIndex = 0;
+
+        const marker = document.createElement("span");
+        marker.textContent = record.pinned ? "●" : "○";
+
+        const title = document.createElement("span");
+        title.className = "history-entry-title";
+        title.textContent = record.title || "未命名对话";
+
+        const moreButton = document.createElement("button");
+        moreButton.className = "history-more";
+        moreButton.type = "button";
+        moreButton.textContent = "⋯";
+        moreButton.setAttribute("aria-label", `打开更多操作：${title.textContent}`);
+        moreButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openHistoryMenu(record, moreButton);
+        });
+
+        entry.append(marker, title, moreButton);
+        entry.addEventListener("click", () => loadHistoryRecord(record.id));
+        entry.addEventListener("keydown", (event) => {
+          if (event.target.closest(".history-more")) return;
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          loadHistoryRecord(record.id);
+        });
+        historyList.appendChild(entry);
+      });
+      updateCurrentChatTitle();
+    }
+
+    function togglePinHistoryRecord(id) {
+      historyRecords = sortHistoryRecords(historyRecords.map((item) => (
+        item.id === id ? { ...item, pinned: !item.pinned } : item
+      )));
+      saveHistory();
+      renderHistory();
+    }
+
+    function renameHistoryRecord(id) {
+      const record = historyRecords.find((item) => item.id === id);
+      if (!record) return;
+      const nextTitle = prompt("请输入新的对话名称", record.title || "未命名对话");
+      if (nextTitle === null) {
+        closeHistoryMenu();
+        return;
+      }
+      const trimmed = nextTitle.trim();
+      if (!trimmed) {
+        closeHistoryMenu();
+        return;
+      }
+      historyRecords = historyRecords.map((item) => (
+        item.id === id ? { ...item, title: trimmed.slice(0, 36), customTitle: true } : item
+      ));
+      saveHistory();
+      renderHistory();
+    }
+
+    async function deleteHistoryRecord(id) {
+      const deletingCurrent = id === sessionId;
+      historyRecords = historyRecords.filter((item) => item.id !== id);
+      saveHistory();
+
+      if (deletingCurrent) {
+        if (verifiedAccessPassword) {
+          try {
+            await api("/api/clear");
+          } catch {
+            accessStatus.textContent = "历史已删除，但后端上下文清理失败";
+            accessStatus.className = "access-status bad";
+          }
+        }
+
+        messages = [];
+        localStorage.removeItem(localMessagesKey);
+        sessionId = crypto.randomUUID();
+        localStorage.setItem(sessionKey, sessionId);
+        autoScrollEnabled = true;
+        renderMessages({ forceScroll: true });
+      }
+
+      renderHistory();
+    }
+
+    async function restoreBackendSession() {
+      try {
+        await api("/api/restore", { messages: messages.filter((item) => !item.localOnly) });
+      } catch (error) {
+        accessStatus.textContent = `历史记录已恢复，但后端上下文同步失败：${error.message}`;
+        accessStatus.className = "access-status bad";
+      }
+    }
+
+    async function restoreBackendMessages(items) {
+      await api("/api/restore", { messages: items.filter((item) => !item.localOnly) });
+    }
+
+    async function loadHistoryRecord(id) {
+      const record = historyRecords.find((item) => item.id === id);
+      if (!record) return;
+      sessionId = record.id;
+      messages = record.messages || [];
+      localStorage.setItem(sessionKey, sessionId);
+      localStorage.setItem(localMessagesKey, JSON.stringify(messages));
+      autoScrollEnabled = true;
+      renderMessages({ forceScroll: true });
+      renderHistory();
+      if (verifiedAccessPassword) {
+        await restoreBackendSession();
+      }
+      closeMobileSidebar();
+    }
+
+    function setUnlocked(isUnlocked) {
+      app.classList.remove("locked");
+      messageInput.disabled = false;
+      sendBtn.disabled = false;
+      if (isUnlocked) {
+        accessStatus.textContent = "已通过，可以开始对话";
+        accessStatus.className = "access-status ok";
+        messageInput.focus();
+      } else {
+        verifiedAccessPassword = "";
+        localStorage.removeItem(accessKey);
+        accessStatus.textContent = "输入密码后开始对话";
+        accessStatus.className = "access-status";
+      }
+    }
+
+    async function tryUnlock() {
+      const candidate = passwordInput.value.trim();
+      if (!candidate) {
+        setUnlocked(false);
+        accessStatus.textContent = "请输入访问密码";
+        accessStatus.className = "access-status bad";
+        passwordInput.focus();
+        return;
+      }
+
+      unlockBtn.disabled = true;
+      try {
+        await apiWithPassword("/api/status", candidate);
+        verifiedAccessPassword = candidate;
+        setUnlocked(true);
+        closeMobileSidebar();
+        if (messages.length) restoreBackendSession();
+      } catch {
+        setUnlocked(false);
+        accessStatus.textContent = "密码不正确";
+        accessStatus.className = "access-status bad";
+        passwordInput.focus();
+      } finally {
+        unlockBtn.disabled = false;
+      }
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    const emphasisTerms = [
+      "\u4e2d\u56fd\u5171\u4ea7\u515a",
+      "\u5171\u4ea7\u515a",
+      "\u6297\u65e5\u6218\u4e89",
+      "\u300a\u8bba\u6301\u4e45\u6218\u300b",
+      "\u6301\u4e45\u6218",
+      "\u4e2d\u56fd\u5fc5\u4ea1",
+      "\u4e2d\u56fd\u901f\u80dc",
+      "\u4e2d\u56fd\u4e0d\u4f1a\u4ea1",
+      "\u4e0d\u80fd\u901f\u80dc",
+      "\u4e0d\u4f1a\u4ea1\u56fd",
+      "\u654c\u540e\u6297\u65e5\u6839\u636e\u5730",
+      "\u654c\u540e\u6839\u636e\u5730",
+      "\u6839\u636e\u5730",
+      "\u4eba\u6c11\u6218\u4e89",
+      "\u4eba\u6c11\u7fa4\u4f17",
+      "\u4eba\u6c11\u52a8\u5458",
+      "\u7fa4\u4f17\u52a8\u5458",
+      "\u516b\u8def\u519b",
+      "\u65b0\u56db\u519b",
+      "\u65e5\u672c\u519b\u961f",
+      "\u4e2d\u56fd\u519b\u961f",
+      "\u519b\u961f",
+      "\u8001\u767e\u59d3",
+      "\u4ee5\u6218\u517b\u6218",
+      "\u6218\u7565\u9632\u5fa1\u9636\u6bb5",
+      "\u6218\u7565\u76f8\u6301\u9636\u6bb5",
+      "\u6218\u7565\u53cd\u653b\u9636\u6bb5",
+      "\u6218\u7565\u9632\u5fa1",
+      "\u6218\u7565\u76f8\u6301",
+      "\u6218\u7565\u53cd\u653b",
+      "\u654c\u5f3a\u6211\u5f31",
+      "\u654c\u5c0f\u6211\u5927",
+      "\u654c\u9000\u6b65\u6211\u8fdb\u6b65",
+      "\u654c\u5be1\u52a9\u6211\u591a\u52a9",
+      "\u654c\u6211\u529b\u91cf\u5bf9\u6bd4",
+      "\u529b\u91cf\u5bf9\u6bd4",
+      "\u6218\u4e89\u6027\u8d28",
+      "\u5386\u53f2\u6761\u4ef6",
+      "\u56fd\u9645\u5f62\u52bf",
+      "\u56fd\u9645\u6761\u4ef6",
+      "\u4fb5\u7565\u6218\u4e89",
+      "\u6b63\u4e49\u6218\u4e89",
+      "\u4ea1\u56fd\u8bba",
+      "\u901f\u80dc\u8bba",
+      "\u8fd0\u52a8\u6218",
+      "\u6e38\u51fb\u6218",
+      "\u9635\u5730\u6218",
+      "\u7834\u88ad\u6218",
+      "\u534e\u5317",
+      "\u534e\u4e2d",
+      "\u534e\u5357"
+    ];
+
+    function escapeRegExp(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function addEmphasisRanges(text, ranges, pattern, limit = Infinity) {
+      let match;
+      let count = 0;
+      pattern.lastIndex = 0;
+      while ((match = pattern.exec(text)) !== null && count < limit) {
+        if (!match[0]) {
+          pattern.lastIndex += 1;
+          continue;
+        }
+        ranges.push({ start: match.index, end: match.index + match[0].length });
+        count += 1;
+      }
+    }
+
+    function mergeEmphasisRanges(ranges) {
+      return ranges
+        .filter((range) => range.end > range.start)
+        .sort((a, b) => a.start - b.start || b.end - a.end)
+        .reduce((merged, range) => {
+          const last = merged[merged.length - 1];
+          if (!last || range.start > last.end) {
+            merged.push({ ...range });
+          } else if (range.end > last.end) {
+            last.end = range.end;
+          }
+          return merged;
+        }, []);
+    }
+
+    function collectInlineEmphasisRanges(text) {
+      const ranges = [];
+      addEmphasisRanges(text, ranges, /\u300a[^\u300b]{2,30}\u300b/g, 4);
+      addEmphasisRanges(text, ranges, /\u201c[^\u201d]{2,16}\u201d/g, 3);
+      addEmphasisRanges(text, ranges, /^(\s*(?:\d+[\.\u3001]|[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341]+[\u3001\.\uff0e]|\u7b2c[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341]+\u4ef6\uff0c|\u7b2c[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341]+\uff0c))/g, 1);
+
+      const sortedTerms = [...emphasisTerms].sort((a, b) => b.length - a.length);
+      addEmphasisRanges(text, ranges, new RegExp(sortedTerms.map(escapeRegExp).join("|"), "g"), 7);
+      return mergeEmphasisRanges(ranges);
+    }
+
+    function renderInlineEmphasis(text) {
+      const ranges = collectInlineEmphasisRanges(text);
+      if (!ranges.length) return escapeHtml(text);
+
+      let html = "";
+      let cursor = 0;
+      ranges.forEach((range) => {
+        html += escapeHtml(text.slice(cursor, range.start));
+        html += `<strong>${escapeHtml(text.slice(range.start, range.end))}</strong>`;
+        cursor = range.end;
+      });
+      html += escapeHtml(text.slice(cursor));
+      return html;
+    }
+
+    function isMajorHeading(line) {
+      const text = line.trim();
+      if (/^[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341]+[\u3001\.\uff0e]\s*[^\n]{2,32}$/.test(text)) return true;
+      return /^(运动战|游击战|阵地战|战略防御|战略相持|战略反攻|亡国论|速胜论|持久战|通俗总结|核心判断|基本区别)$/.test(text);
+    }
+
+    function isMinorHeading(line) {
+      const text = line.trim();
+      if (!text || isMajorHeading(text) || /[\u3002\uff01\uff1f\uff1b]$/.test(text)) return false;
+      if (text.length > 22) return false;
+      return /[\/\uff0f]|\u80cc\u666f|\u5224\u65ad|\u65b9\u6cd5|\u9636\u6bb5|\u529b\u91cf|\u7fa4\u4f17|\u603b\u7ed3|\u542f\u53d1|\u6838\u5fc3|\u7ed3\u8bba|\u7c7b$/.test(text);
+    }
+
+    function renderAgentBlock(block) {
+      const line = block.trim();
+      if (!line) return "";
+      if (isMajorHeading(line)) {
+        return `<div class="agent-major">${escapeHtml(line)}</div>`;
+      }
+      if (isMinorHeading(line)) {
+        return `<div class="agent-minor">${escapeHtml(line)}</div>`;
+      }
+      return `<p class="agent-paragraph">${renderInlineEmphasis(line)}</p>`;
+    }
+
+    function renderAgentContent(content) {
+      const cleanContent = content.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__/g, "");
+      const blocks = [];
+      const paragraph = [];
+      const flushParagraph = () => {
+        if (!paragraph.length) return;
+        blocks.push(paragraph.join("\n"));
+        paragraph.length = 0;
+      };
+
+      cleanContent.split("\n").forEach((rawLine) => {
+        const line = rawLine.trim();
+        if (!line) {
+          flushParagraph();
+          return;
+        }
+        if (isMajorHeading(line) || isMinorHeading(line)) {
+          flushParagraph();
+          blocks.push(line);
+          return;
+        }
+        paragraph.push(line);
+      });
+      flushParagraph();
+
+      return blocks.map(renderAgentBlock).join("");
+    }
+    function setMessageContent(node, item) {
+      if (item.role === "agent") {
+        node.innerHTML = renderAgentContent(item.content);
+      } else {
+        node.textContent = item.content;
+      }
+    }
+
+    function distanceFromBottom() {
+      return Math.max(0, document.documentElement.scrollHeight - window.innerHeight - window.scrollY);
+    }
+
+    function isNearBottom(threshold = 140) {
+      return distanceFromBottom() <= threshold;
+    }
+
+    function scrollToBottomIfAllowed(behavior = "auto", force = false) {
+      if (!force && !autoScrollEnabled) return;
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior });
+      lastScrollY = window.scrollY;
+    }
+
+    function updateAutoScrollFromUserScroll() {
+      const currentY = window.scrollY;
+      if (isStreamingResponse && currentY < lastScrollY - 2) {
+        autoScrollEnabled = false;
+      }
+      if (isNearBottom()) {
+        autoScrollEnabled = true;
+      }
+      lastScrollY = currentY;
+    }
+
+    function createIconButton(label, icon, onClick) {
+      const button = document.createElement("button");
+      button.className = "message-action";
+      button.type = "button";
+      button.setAttribute("aria-label", label);
+      button.setAttribute("title", label);
+      button.innerHTML = icon;
+      button.addEventListener("click", onClick);
+      return button;
+    }
+
+    async function copyTextToClipboard(text, button) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const fallback = document.createElement("textarea");
+        fallback.value = text;
+        fallback.setAttribute("readonly", "");
+        fallback.style.position = "fixed";
+        fallback.style.left = "-9999px";
+        document.body.appendChild(fallback);
+        fallback.select();
+        document.execCommand("copy");
+        fallback.remove();
+      }
+      const originalLabel = button.getAttribute("aria-label") || "复制";
+      button.setAttribute("aria-label", "已复制");
+      button.setAttribute("title", "已复制");
+      setTimeout(() => {
+        button.setAttribute("aria-label", originalLabel);
+        button.setAttribute("title", originalLabel);
+      }, 900);
+    }
+
+    function startInlineEdit(index) {
+      if (isStreamingResponse) return;
+      editingMessageIndex = index;
+      renderMessages({ noScroll: true });
+      const editor = conversation.querySelector(".message-editor textarea");
+      if (editor) {
+        editor.focus();
+        editor.setSelectionRange(editor.value.length, editor.value.length);
+        editor.closest(".message-editor")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+
+    function createMessageEditor(item, index) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "message-editor";
+
+      const editor = document.createElement("textarea");
+      editor.value = item.content;
+      editor.setAttribute("aria-label", "编辑这条消息");
+
+      const actions = document.createElement("div");
+      actions.className = "message-editor-actions";
+
+      const cancelButton = document.createElement("button");
+      cancelButton.className = "message-edit-cancel";
+      cancelButton.type = "button";
+      cancelButton.textContent = "取消";
+      cancelButton.addEventListener("click", () => {
+        editingMessageIndex = null;
+        renderMessages({ noScroll: true });
+      });
+
+      const sendButton = document.createElement("button");
+      sendButton.className = "message-edit-send";
+      sendButton.type = "button";
+      sendButton.textContent = "发送";
+      sendButton.addEventListener("click", () => submitEditedMessage(index, editor.value));
+
+      editor.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" || !event.ctrlKey || event.isComposing) return;
+        event.preventDefault();
+        submitEditedMessage(index, editor.value);
+      });
+
+      actions.append(cancelButton, sendButton);
+      wrapper.append(editor, actions);
+      return wrapper;
+    }
+
+    function createMessageActions(item, index) {
+      const actions = document.createElement("div");
+      actions.className = "message-actions";
+
+      const copyIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="9" width="10" height="10" rx="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      `;
+      const editIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+        </svg>
+      `;
+
+      actions.append(
+        createIconButton("复制", copyIcon, (event) => copyTextToClipboard(item.content, event.currentTarget)),
+        createIconButton("重新编辑", editIcon, () => startInlineEdit(index))
+      );
+      return actions;
+    }
+
+    function renderMessages(options = {}) {
+      conversation.querySelectorAll(".message, .message-actions, .message-editor").forEach((node) => node.remove());
+      welcome.style.display = messages.length ? "none" : "block";
+      messages.forEach((item, index) => {
+        if (item.role === "user" && editingMessageIndex === index) {
+          conversation.appendChild(createMessageEditor(item, index));
+          return;
+        }
+        const node = document.createElement("div");
+        node.className = `message ${item.role}`;
+        setMessageContent(node, item);
+        conversation.appendChild(node);
+        if (item.role === "user") {
+          conversation.appendChild(createMessageActions(item, index));
+        }
+      });
+      if (!options.noScroll) {
+        scrollToBottomIfAllowed(options.behavior || "smooth", Boolean(options.forceScroll));
+      }
+    }
+
+    function addMessage(role, content, options = {}) {
+      messages.push({ role, content, ...options });
+      saveLocalMessages();
+      renderMessages();
+    }
+
+    function setBusy(isBusy) {
+      messageInput.disabled = false;
+      sendBtn.disabled = isBusy;
+      sendBtn.style.display = isBusy ? "none" : "";
+      stopBtn.classList.toggle("visible", isBusy);
+      stopBtn.disabled = !isBusy;
+      stopBtn.textContent = "■";
+      stopBtn.title = "停止生成";
+      stopBtn.setAttribute("aria-label", "停止生成");
+    }
+
+    function isCasualGreeting(text) {
+      const normalized = text
+        .trim()
+        .toLowerCase()
+        .replace(/[\s。！？!?,，、~～.]/g, "");
+      return [
+        "你好",
+        "您好",
+        "嗨",
+        "哈喽",
+        "在吗",
+        "在不在",
+        "hello",
+        "hi",
+        "hey",
+        "早上好",
+        "上午好",
+        "中午好",
+        "下午好",
+        "晚上好"
+      ].includes(normalized);
+    }
+
+    function shortGreetingReply() {
+      return "孩子啊，你好。我在这里，你想了解《论持久战》的哪一方面，可以直接问我。";
+    }
+
+    function normalizeShortText(text) {
+      return text.trim().toLowerCase().replace(/[\s。！？!?,，、~～.]/g, "");
+    }
+
+    function isPersonalSmallTalk(text) {
+      const normalized = normalizeShortText(text);
+      return /^(我)?(困了|好困|很困|太困了|有点困|累了|好累|很累|太累了|有点累|困死了|累死了|想睡觉|要睡了|睡觉了|晚安|先睡了|先休息了|休息一下|我先走了|再见|拜拜|谢谢|感谢)$/.test(normalized);
+    }
+
+    function smallTalkReply(text) {
+      const normalized = normalizeShortText(text);
+      if (/困|睡|晚安|休息/.test(normalized)) {
+        return "孩子啊，困了就先歇一歇。人要养足精神，脑子清明了，明日再谈问题也不迟。";
+      }
+      if (/累/.test(normalized)) {
+        return "孩子啊，累了就停一停。做学问、想问题，都要有精神作底子，先把身子照看好。";
+      }
+      if (/谢|感谢/.test(normalized)) {
+        return "不用谢。你什么时候还想接着谈《论持久战》，再来问我就是。";
+      }
+      return "好，先到这里。你需要的时候，再来找我谈。";
+    }
+
+    function isOverviewQuestion(text) {
+      const normalized = text.trim().replace(/\s+/g, "");
+      return /论持久战/.test(normalized) && /(讲什么|讲的是?什么|是讲什么|主要讲|主要内容|内容是什么|是什么书|说的是什么|说什么|介绍一下|概括一下)/.test(normalized);
+    }
+
+    function isBareContinueRequest(text) {
+      const normalized = text.trim().replace(/\s+/g, "");
+      return /^(继续|接着讲|往下讲|继续讲|接着说|往下说|说下去|讲下去)$/.test(normalized);
+    }
+
+    function hasContextReference(text) {
+      return /(那时候|当时|那个时候|这个|这件事|刚才|前面|上面|它|他们|为什么会这样|战况怎么样|情况怎么样)/.test(text);
+    }
+
+    function getPreviousUserQuestion(currentText) {
+      for (let index = messages.length - 1; index >= 0; index -= 1) {
+        const item = messages[index];
+        if (item.role !== "user") continue;
+        if (item.localOnly) continue;
+        if (item.content.trim() === currentText.trim()) continue;
+        return item.content.trim();
+      }
+      return "";
+    }
+
+    function buildContextInstruction(text) {
+      if (!hasContextReference(text)) return "";
+      const previousQuestion = getPreviousUserQuestion(text);
+      if (!previousQuestion) return "";
+      return `
+
+上下文衔接要求：
+用户上一轮问题是：“${previousQuestion}”。
+本轮如果出现“那时候、当时、这个、它、战况怎么样”等指代，必须优先按上一轮话题来理解，不要脱离上文另起话题，也不要默认理解成《论持久战》写作前后。`;
+    }
+
+    function buildModelMessage(text) {
+      if (isCasualGreeting(text)) return text;
+      if (isPersonalSmallTalk(text)) return text;
+      const contextInstruction = buildContextInstruction(text);
+      if (isBareContinueRequest(text)) {
+        return `${text}
+${contextInstruction}
+
+请按以下要求回答，但不要复述这些要求：
+1. 用户是在要求你承接上一条回答继续讲，不要反问“你指的是哪一个问题”。
+2. 必须继续使用编号大标题结构，大标题单独成行，格式固定为“一、标题”“二、标题”“三、标题”。
+3. 如果上一条回答被中断，就从中断处的下一个要点继续；如果无法判断中断处，就围绕上一轮主题继续补充。
+4. 正文每段只讲一个要点，段落之间留空行。
+5. 口吻继续采用历史情境化的毛泽东第一人称视角，语言朴素、沉稳、有力量。
+6. 不要输出 Markdown 符号，不要写 **、##、- 这类格式符号。`;
+      }
+      if (isOverviewQuestion(text)) {
+        return `${text}
+${contextInstruction}
+
+请按以下要求回答，但不要复述这些要求：
+1. 这是“概览问题”，先直接回答《论持久战》这本书主要讲什么，不要一上来展开成敌我力量、人民群众、战略阶段等专题分析。
+2. 回答控制在三段以内，重点是“这本书的主题是什么、主要反驳什么、给出的基本判断是什么”。
+3. 只在必要时简要提到“持久战”“亡国论”“速胜论”，不要主动展开“敌强我弱”“中国地大人多”“人民群众是决定力量”“战略防御、战略相持、战略反攻”等专题，也不要使用长跑之类的比喻扩写。
+4. 口吻采用历史情境化的毛泽东第一人称视角，让用户像是在听《论持久战》的作者当面讲课。可以用“孩子啊”“我来给你讲清楚”“我在《论持久战》中要说明的是”“这个问题要这样看”等说法；语言要朴素、有力量、有长辈感。不要编造没有史料依据的具体亲历细节、私人对话和现场故事。
+5. 不要输出 Markdown 符号，不要写 **、##、- 这类格式符号。`;
+      }
+      return `${text}
+${contextInstruction}
+
+请按以下排版要求回答，但不要复述这些要求：
+1. 先判断用户真正问的是什么，只回答用户问题涉及的内容，不要把所有知识点都套进去。
+2. 必须使用编号大标题组织答案，至少 2 个大标题；大标题必须单独成行，格式固定为“一、标题”“二、标题”“三、标题”。不要只写“运动战”“游击战”这种无编号标题。
+3. 第二次、第三次对话，或者用户说“继续”“继续讲刚才的”，也必须保持同样的大标题规则。
+4. 标题要根据用户问题生成，不要固定使用“历史背景、敌我力量对比、人民群众、战略阶段”。
+5. 如果用户没有问历史背景、敌我力量、群众动员、战略阶段，就不要主动大段展开这些内容。
+6. 正文每段只讲一个要点，段落之间留空行。
+7. 口吻采用历史情境化的毛泽东第一人称视角，让用户像是在听《论持久战》的作者当面讲课。可以用“孩子啊”“同志啊”“我来给你讲清楚”“我看这个问题”“我在《论持久战》中要说明的是”“这个问题要放到当时条件里看”等说法；语言朴素、沉稳、有力量，有长辈感。可以从当时历史处境出发讲“我们为什么这样判断”，但不要编造没有史料依据的具体亲历细节、私人对话和现场故事。
+8. 不要输出 Markdown 符号，不要写 **、##、- 这类格式符号。`;
+    }
+
+    function addTyping() {
+      const node = document.createElement("div");
+      node.className = "message agent";
+      node.id = "typing";
+      node.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+      welcome.style.display = "none";
+      conversation.appendChild(node);
+      return node;
+    }
+
+    function apiUrls(path) {
+      const params = new URLSearchParams(window.location.search);
+      const explicitOrigin = params.get("api");
+      const origins = [];
+      if (explicitOrigin) origins.push(explicitOrigin.replace(/\/$/, ""));
+      if (window.location.protocol !== "file:") origins.push(window.location.origin);
+      if (API_FALLBACK_ORIGIN) origins.push(API_FALLBACK_ORIGIN);
+      return [...new Set(origins)].map((origin) => `${origin}${path}`);
+    }
+
+    async function apiWithPassword(path, password, body = {}) {
+      const requestBody = JSON.stringify({ ...body, password, session_id: sessionId });
+      const urls = apiUrls(path);
+      let lastError;
+
+      for (const url of urls) {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: requestBody
+          });
+          const payload = await response.json().catch(() => ({}));
+
+          if (response.status === 404 || response.status === 405 || response.status === 501) {
+            lastError = new Error(`当前页面地址没有聊天后端：${url}`);
+            continue;
+          }
+
+          if (!response.ok || payload.error) {
+            throw new Error(payload.error || `请求失败：${response.status}`);
+          }
+          return payload;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw new Error(
+        `无法连接智能体后端。请确认 Vercel 环境变量和 /api 后端函数已正确部署。原始错误：${lastError?.message || "unknown"}`
+      );
+    }
+
+    async function api(path, body = {}) {
+      if (!verifiedAccessPassword) {
+        throw new Error("请先输入正确访问密码");
+      }
+      return apiWithPassword(path, verifiedAccessPassword, body);
+    }
+
+    async function streamApi(path, body = {}, onDelta, signal) {
+      if (!verifiedAccessPassword) {
+        throw new Error("请先输入正确访问密码");
+      }
+      const requestBody = JSON.stringify({ ...body, password: verifiedAccessPassword, session_id: sessionId });
+      const urls = apiUrls(path);
+      let lastError;
+
+      for (const url of urls) {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: requestBody,
+            signal
+          });
+
+          if (response.status === 404 || response.status === 405 || response.status === 501) {
+            lastError = new Error(`当前页面地址没有流式聊天后端：${url}`);
+            continue;
+          }
+
+          if (!response.ok || !response.body) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.error || `请求失败：${response.status}`);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const events = buffer.split("\n\n");
+            buffer = events.pop() || "";
+
+            for (const eventText of events) {
+              const line = eventText.split("\n").find((item) => item.startsWith("data:"));
+              if (!line) continue;
+              const payload = JSON.parse(line.slice(5).trim());
+              if (payload.error) throw new Error(payload.error);
+              if (payload.delta) onDelta(payload.delta);
+              if (payload.done) return;
+            }
+          }
+          return;
+        } catch (error) {
+          if (error.name === "AbortError") throw error;
+          lastError = error;
+        }
+      }
+
+      throw new Error(
+        `无法连接智能体流式后端。请确认 Vercel 环境变量和 /api 后端函数已正确部署。原始错误：${lastError?.message || "unknown"}`
+      );
+    }
+
+    async function generateAgentReply(text) {
+      if (isCasualGreeting(text)) {
+        addMessage("agent", shortGreetingReply());
+        messageInput.focus();
+        return;
+      }
+
+      if (isPersonalSmallTalk(text)) {
+        addMessage("agent", smallTalkReply(text));
+        messageInput.focus();
+        return;
+      }
+
+      setBusy(true);
+      stopRequested = false;
+      isStreamingResponse = true;
+      currentStreamController = new AbortController();
+
+      const agentMessage = { role: "agent", content: "" };
+      messages.push(agentMessage);
+      saveLocalMessages();
+      renderMessages();
+      let agentNode = conversation.lastElementChild;
+
+      try {
+        await streamApi("/api/chat_stream", { message: buildModelMessage(text), original_message: text }, (delta) => {
+          agentMessage.content += delta;
+          if (!agentNode || !agentNode.classList.contains("agent")) {
+            renderMessages();
+            agentNode = conversation.lastElementChild;
+          }
+          setMessageContent(agentNode, agentMessage);
+          saveLocalMessages();
+          scrollToBottomIfAllowed();
+        }, currentStreamController.signal);
+      } catch (error) {
+        if (error.name === "AbortError" || stopRequested) {
+          if (!agentMessage.content.trim()) {
+            messages = messages.filter((item) => item !== agentMessage);
+          } else {
+            agentMessage.content = `${agentMessage.content.trim()}\n\n（已停止生成）`;
+          }
+          saveLocalMessages();
+          renderMessages();
+          return;
+        }
+        messages = messages.filter((item) => item !== agentMessage);
+        saveLocalMessages();
+        renderMessages();
+        addMessage("system", error.message);
+      } finally {
+        currentStreamController = null;
+        stopRequested = false;
+        isStreamingResponse = false;
+        setBusy(false);
+        messageInput.focus();
+      }
+    }
+
+    async function submitMessage(value) {
+      const text = value.trim();
+      if (!text || messageInput.disabled || isStreamingResponse) return;
+
+      autoScrollEnabled = true;
+      editingMessageIndex = null;
+      const hasAccess = Boolean(verifiedAccessPassword);
+      addMessage("user", text, { localOnly: !hasAccess });
+      messageInput.value = "";
+      sendBtn.classList.remove("enabled");
+      if (!hasAccess) {
+        addMessage("agent", "请先填写正确的访问密码，再使用智能体对话。", { localOnly: true });
+        accessStatus.textContent = "请先输入正确访问密码";
+        accessStatus.className = "access-status bad";
+        passwordInput.focus();
+        return;
+      }
+      await generateAgentReply(text);
+    }
+
+    async function submitEditedMessage(index, value) {
+      const text = value.trim();
+      if (!text || isStreamingResponse) return;
+
+      autoScrollEnabled = true;
+      editingMessageIndex = null;
+      const previousMessages = messages.slice(0, index);
+      messages = messages.slice(0, index + 1);
+      const hasAccess = Boolean(verifiedAccessPassword);
+      messages[index] = { ...messages[index], content: text, localOnly: !hasAccess };
+      saveLocalMessages();
+      renderMessages({ forceScroll: true });
+
+      if (!hasAccess) {
+        addMessage("agent", "请先填写正确的访问密码，再使用智能体对话。", { localOnly: true });
+        accessStatus.textContent = "请先输入正确访问密码";
+        accessStatus.className = "access-status bad";
+        passwordInput.focus();
+        return;
+      }
+
+      try {
+        await restoreBackendMessages(previousMessages);
+      } catch (error) {
+        addMessage("system", error.message);
+        return;
+      }
+
+      await generateAgentReply(text);
+    }
+
+    async function clearMemory() {
+      messages = [];
+      localStorage.removeItem(localMessagesKey);
+      historyRecords = [];
+      localStorage.removeItem(historyKey);
+      autoScrollEnabled = true;
+      renderMessages({ forceScroll: true });
+      renderHistory();
+      try {
+        await api("/api/clear");
+        accessStatus.textContent = "会话记忆已清空";
+        accessStatus.className = "access-status ok";
+      } catch (error) {
+        accessStatus.textContent = error.message;
+        accessStatus.className = "access-status bad";
+      }
+      closeMobileSidebar();
+    }
+
+    function startNewChat() {
+      saveCurrentToHistory();
+      messages = [];
+      localStorage.removeItem(localMessagesKey);
+      sessionId = crypto.randomUUID();
+      localStorage.setItem(sessionKey, sessionId);
+      autoScrollEnabled = true;
+      renderMessages({ forceScroll: true });
+      renderHistory();
+      messageInput.focus();
+      closeMobileSidebar();
+    }
+
+    unlockBtn.addEventListener("click", tryUnlock);
+    passwordToggle.addEventListener("click", () => {
+      const shouldShow = passwordInput.type === "password";
+      passwordInput.type = shouldShow ? "text" : "password";
+      passwordToggle.setAttribute("aria-label", shouldShow ? "隐藏密码" : "显示密码");
+      passwordToggle.setAttribute("title", shouldShow ? "隐藏密码" : "显示密码");
+      passwordToggle.classList.toggle("is-visible", shouldShow);
+      passwordInput.focus();
+    });
+
+    passwordInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") tryUnlock();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".history-menu") || event.target.closest(".history-more")) return;
+      closeHistoryMenu();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeHistoryMenu();
+      if (event.key === "Escape") closeMobileSidebar();
+    });
+
+    historyList.addEventListener("scroll", closeHistoryMenu, { passive: true });
+    window.addEventListener("resize", () => {
+      closeHistoryMenu();
+      if (!isMobileViewport()) closeMobileSidebar();
+    });
+
+    window.addEventListener("scroll", updateAutoScrollFromUserScroll, { passive: true });
+
+    window.addEventListener("wheel", (event) => {
+      if (isStreamingResponse && event.deltaY < 0) {
+        autoScrollEnabled = false;
+      }
+    }, { passive: true });
+
+    window.addEventListener("keydown", (event) => {
+      if (!isStreamingResponse) return;
+      if (["ArrowUp", "PageUp", "Home"].includes(event.key)) {
+        autoScrollEnabled = false;
+      }
+      if (event.key === "End") {
+        autoScrollEnabled = true;
+      }
+    });
+
+    let touchStartY = null;
+    window.addEventListener("touchstart", (event) => {
+      touchStartY = event.touches[0]?.clientY ?? null;
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (event) => {
+      if (!isStreamingResponse || touchStartY === null) return;
+      const currentY = event.touches[0]?.clientY ?? touchStartY;
+      if (currentY > touchStartY + 4) {
+        autoScrollEnabled = false;
+      }
+    }, { passive: true });
+
+    chatForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitMessage(messageInput.value);
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (!currentStreamController) return;
+      stopRequested = true;
+      stopBtn.disabled = true;
+      stopBtn.textContent = "…";
+      stopBtn.title = "正在停止";
+      stopBtn.setAttribute("aria-label", "正在停止");
+      currentStreamController.abort();
+    });
+
+    messageInput.addEventListener("input", () => {
+      sendBtn.classList.toggle("enabled", messageInput.value.trim().length > 0);
+    });
+
+    messageInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+      event.preventDefault();
+      submitMessage(messageInput.value);
+    });
+
+    document.querySelectorAll(".prompt-chip").forEach((button) => {
+      button.addEventListener("click", () => {
+        submitMessage(button.dataset.prompt || button.textContent);
+      });
+    });
+
+    clearMemoryBtn.addEventListener("click", clearMemory);
+
+    mobileMenuBtn.addEventListener("click", () => {
+      setMobileSidebar(!app.classList.contains("sidebar-open"));
+    });
+
+    mobileScrim.addEventListener("click", closeMobileSidebar);
+
+    mobileNewChatBtn.addEventListener("click", startNewChat);
+
+    document.addEventListener("dragstart", (event) => {
+      if (event.target.closest(".avatar")) {
+        event.preventDefault();
+      }
+    });
+
+    newChatBtn.addEventListener("click", startNewChat);
+
+    window.addEventListener("keydown", (event) => {
+      if (!event.altKey || event.key.toLowerCase() !== "e") return;
+      event.preventDefault();
+      startNewChat();
+    });
+
+    exportBtn.addEventListener("click", () => {
+      const text = messages.map((m) => `${m.role}: ${m.content}`).join("\n\n");
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "论持久战智能体对话.txt";
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    renderMessages();
+    renderHistory();
+    localStorage.removeItem(accessKey);
+    setUnlocked(false);
+    openInitialMobileSidebar();
+  </script>
+</body>
+</html>
+
